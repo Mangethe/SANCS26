@@ -18,7 +18,7 @@
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; -moz-text-size-adjust: 100%; text-size-adjust: 100%; }
 
 body {
     background: var(--bg);
@@ -44,7 +44,7 @@ body::before {
 nav {
     position: -webkit-sticky; position: sticky; top: 0; z-index: 100;
     background: rgba(8,12,16,0.92);
-    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--border);
     padding: 0 1rem;
     display: flex; align-items: center; justify-content: space-between;

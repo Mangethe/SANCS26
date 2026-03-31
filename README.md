@@ -1,6 +1,6 @@
 # OT Cyber Resilience Platform — DataGr8
 
-### SANCS26 Challenge 5: Operational Technology (OT) Security & Resilience
+## SANCS26 Challenge 5: Operational Technology (OT) Security & Resilience
 
 This platform is a specialized web-based assessment tool designed to help industrial organizations evaluate their Cyber Resilience posture. Built for the **SANCS26** challenge in partnership with **DataGr8**, the tool focuses on providing practical, high-impact security guidance tailored for the African industrial landscape.
 

@@ -1,7 +1,7 @@
 """
 OT Cyber Resilience Platform — Flask Backend
 =============================================
-DataGr8 | SANCS26 Challenge 5
+Group B21 |DataGr8 | SANCS26 Challenge 5
 Run: python app.py  →  open http://localhost:5000
 """
 
