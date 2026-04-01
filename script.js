@@ -1,6 +1,5 @@
 // ── Domain data injected from index.html ──
-let DOMAINS = [];
-const answers = {};
+const answers = {}; 
 
 // ── Data moved from app.py ──
 const DOMAINS = [
@@ -321,20 +320,23 @@ function renderResults(data) {
   `;
 }
 
-async function updateHistory() {
-    try {
-        const res = await fetch('/api/results');
-        const data = await res.json();
-        const list = document.getElementById('historyList');
-        if (!data.sessions.length) return;
-        list.innerHTML = data.sessions.reverse().map(s => `
-      <div class="hist-item">
-        <div class="hist-score" style="color:${maturityColor(s.overall_maturity)}">${s.overall_percent}%</div>
-        <div class="hist-info">
-          <div class="hist-org">${s.org_name}</div>
-          <div class="hist-meta">${s.sector} · ${s.timestamp}</div>
-        </div>
-        <div class="hist-mat mat-${maturityClass(s.overall_maturity)}">${s.overall_maturity}</div>
-      </div>`).join('');
-    } catch (_) { }
+function updateHistory() {
+    const list = document.getElementById('historyList');
+    if (!list) return;
+
+    const history = JSON.parse(localStorage.getItem('ot_history') || '[]');
+    if (history.length === 0) {
+        list.innerHTML = '<div class="empty-history">No assessments yet. Complete your first assessment above.</div>';
+        return;
+    }
+
+    list.innerHTML = history.slice().reverse().map(s => `
+        <div class="hist-item">
+            <div class="hist-score" style="color:${maturityColor(s.overall_maturity)}">${s.overall_percent}%</div>
+            <div class="hist-info">
+                <div class="hist-org">${s.org_name}</div>
+                <div class="hist-meta">${s.sector} · ${s.timestamp}</div>
+            </div>
+            <div class="hist-mat mat-${maturityClass(s.overall_maturity)}">${s.overall_maturity}</div>
+        </div>`).join('');
 }
