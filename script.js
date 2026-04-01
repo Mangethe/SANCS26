@@ -1,6 +1,5 @@
 // ── Domain data injected from index.html ──
-const answers = {}; 
-
+const answers = {};
 // ── Data moved from app.py ──
 const DOMAINS = [
     {
@@ -53,8 +52,6 @@ const ATTACK_CASES = [
     { "title": "Oldsmar Water", "year": 2021, "country": "USA", "domain": "Monitoring", "summary": "Remote poisoning attempt.", "cost": "Public safety risk", "lesson": "Monitor remote access.", "severity": "high" },
     { "title": "SA Power Grid", "year": 2023, "country": "SA", "domain": "Infrastructure", "summary": "Ageing SCADA high-risk profile.", "cost": "Economic exposure", "lesson": "Affordable resilience is key.", "severity": "high" }
 ];
-
-const answers = {};
 
 window.onload = () => {
     renderPillars();
@@ -220,10 +217,20 @@ function getMaturity(pct) {
 function submitAssessment() {
     const orgNameInput = document.getElementById('orgName');
     const orgName = orgNameInput.value.trim();
-    if (!orgName) { orgNameInput.classList.add('error'); return; }
+    if (!orgName) { 
+        orgNameInput.focus();
+        orgNameInput.classList.add('error'); 
+        return; 
+    }
     orgNameInput.classList.remove('error');
 
-    document.getElementById('submitSpinner').classList.add('visible');
+    const btn = document.getElementById('submitBtn');
+    const label = document.getElementById('submitLabel');
+    const spinner = document.getElementById('submitSpinner');
+
+    btn.disabled = true;
+    label.textContent = 'Analysing...';
+    spinner.classList.add('visible');
 
     setTimeout(() => {
         const scored = calculateScore(answers);
@@ -241,8 +248,12 @@ function submitAssessment() {
 
         renderResults(result);
         updateHistory();
+        
         document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
-        document.getElementById('submitSpinner').classList.remove('visible');
+        
+        btn.disabled = false;
+        label.textContent = 'Submit & Get Results';
+        spinner.classList.remove('visible');
     }, 1000);
 }
 
