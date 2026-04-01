@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>OT Cyber Resilience Platform — DataGr8</title>
-<link rel="stylesheet" href="style.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
 <style>
@@ -285,16 +284,8 @@ input.error { border-color: var(--red); }
       <span class="sec-num">01 — FRAMEWORK</span>
       <h2 class="sec-title">The 4 Resilience Pillars</h2>
     </div>
-    <div class="pillars-grid">
-      {% for domain in domains %}
-      <div class="pillar-card">
-        <div class="pillar-icon">{{ domain.icon }}</div>
-        <div class="pillar-num">Pillar {{ loop.index }}</div>
-        <div class="pillar-name">{{ domain.title }}</div>
-        <div class="pillar-desc">{{ domain.description }}</div>
-        <div class="pillar-q">{{ domain.questions|length }} controls assessed</div>
-      </div>
-      {% endfor %}
+    <div class="pillars-grid" id="pillarsGrid">
+      <!-- Populated by JavaScript -->
     </div>
   </div>
 </section>
@@ -368,29 +359,8 @@ input.error { border-color: var(--red); }
       <span class="sec-num">04 — THREAT INTELLIGENCE</span>
       <h2 class="sec-title">Real-World OT Attack Cases</h2>
     </div>
-    <div class="cases-grid">
-      {% for c in attack_cases %}
-      <div class="case-card">
-        <div class="case-top">
-          <div>
-            <div class="case-title">{{ c.title }}</div>
-            <div class="case-domain">{{ c.domain }}</div>
-          </div>
-          <div class="case-meta">
-            <div class="case-sev sev-{{ c.severity }}">{{ c.severity }}</div>
-            <div class="case-year">{{ c.country }} · {{ c.year }}</div>
-          </div>
-        </div>
-        <div class="case-body">
-          <div class="case-summary">{{ c.summary }}</div>
-          <div class="case-lesson">
-            <div class="case-lesson-label">Key Lesson</div>
-            <div class="case-lesson-text">{{ c.lesson }}</div>
-          </div>
-          <div class="case-cost">💸 {{ c.cost }}</div>
-        </div>
-      </div>
-      {% endfor %}
+    <div class="cases-grid" id="casesGrid">
+      <!-- Populated by JavaScript -->
     </div>
   </div>
 </section>
@@ -416,14 +386,6 @@ input.error { border-color: var(--red); }
   </div>
 </footer>
 
-<script src="script.js"></script>
-<script>
-    /** 
-     * Data injected from Flask. 
-     * We use a template literal to satisfy the IDE's JS linter.
-     */
-    const DOMAINS_DATA = {{ domains | tojson | safe }};
-    initAssessment(DOMAINS_DATA);
-</script>
+<script src="static/scripts/script.js"></script>
 </body>
 </html>
