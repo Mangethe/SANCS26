@@ -1,0 +1,221 @@
+// ── Domain data injected from index.html ──
+let DOMAINS = [];
+const answers = {};
+
+/**
+ * Initialize the assessment form using data passed from the template
+ */
+function initAssessment(data) {
+    DOMAINS = data;
+    const container = document.getElementById('domainBlocks');
+    if (!container) return;
+
+    DOMAINS.forEach((domain, di) => {
+        const block = document.createElement('div');
+        block.className = 'domain-block open';
+        block.id = `domain-${domain.id}`;
+
+        block.innerHTML = `
+      <div class="domain-header" onclick="toggleDomain('${domain.id}')">
+        <span class="domain-icon">${domain.icon}</span>
+        <span class="domain-title">Pillar ${di + 1} — ${domain.title}</span>
+        <span class="domain-progress-pill" id="pill-${domain.id}">0 / ${domain.questions.length}</span>
+        <span class="domain-chevron">▶</span>
+      </div>
+      <div class="domain-body" id="body-${domain.id}">
+        ${domain.questions.map((q, qi) => `
+          <div class="question-item" id="qi-${q.id}">
+            <div class="q-text">${qi + 1}. ${q.text}</div>
+            <div class="q-context">${q.context}</div>
+            <div class="q-answers">
+              <button class="q-btn" onclick="setAnswer('${domain.id}','${q.id}','yes',this)">✓ Yes</button>
+              <button class="q-btn" onclick="setAnswer('${domain.id}','${q.id}','partial',this)">◑ Partial</button>
+              <button class="q-btn" onclick="setAnswer('${domain.id}','${q.id}','no',this)">✗ No</button>
+            </div>
+            <div class="q-rec" id="rec-${q.id}">${q.recommendation}</div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+        container.appendChild(block);
+    });
+}
+
+function toggleDomain(id) {
+    const block = document.getElementById(`domain-${id}`);
+    block.classList.toggle('open');
+}
+
+function setAnswer(domainId, qId, value, btn) {
+    answers[qId] = value;
+    const qItem = document.getElementById(`qi-${qId}`);
+    qItem.querySelectorAll('.q-btn').forEach(b => {
+        b.classList.remove('sel-yes', 'sel-partial', 'sel-no');
+    });
+    btn.classList.add(`sel-${value}`);
+    const rec = document.getElementById(`rec-${qId}`);
+    rec.classList.toggle('visible', value === 'no' || value === 'partial');
+    updateProgress();
+}
+
+function updateProgress() {
+    const total = DOMAINS.reduce((s, d) => s + d.questions.length, 0);
+    const done = Object.keys(answers).length;
+    const countEl = document.getElementById('answeredCount');
+    const barEl = document.getElementById('progressBar');
+
+    if (countEl) countEl.textContent = done;
+    if (barEl) barEl.style.width = `${(done / total) * 100}%`;
+
+    DOMAINS.forEach(domain => {
+        const count = domain.questions.filter(q => answers[q.id]).length;
+        const pill = document.getElementById(`pill-${domain.id}`);
+        if (pill) {
+            pill.textContent = `${count} / ${domain.questions.length}`;
+            if (count === domain.questions.length) {
+                pill.classList.add('completed');
+            }
+        }
+    });
+
+    const btn = document.getElementById('submitBtn');
+    const note = document.getElementById('submitNote');
+    if (done === total) {
+        btn.disabled = false;
+        note.textContent = '✓ All questions answered — ready to submit';
+        note.classList.add('ready');
+    } else {
+        btn.disabled = true;
+        note.textContent = `${total - done} questions remaining`;
+        note.classList.remove('ready');
+    }
+}
+
+async function submitAssessment() {
+    const orgNameInput = document.getElementById('orgName');
+    const orgName = orgNameInput.value.trim();
+    if (!orgName) {
+        orgNameInput.focus();
+        orgNameInput.classList.add('error');
+        return;
+    }
+    orgNameInput.classList.remove('error');
+
+    document.getElementById('submitSpinner').classList.add('visible');
+    document.getElementById('submitLabel').textContent = 'Analysing...';
+    document.getElementById('submitBtn').disabled = true;
+
+    try {
+        const res = await fetch('/api/assess', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                org_name: orgName,
+                sector: document.getElementById('sector').value,
+                answers
+            })
+        });
+        const data = await res.json();
+        renderResults(data);
+        updateHistory();
+        document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+    } catch (e) {
+        alert('Error submitting assessment. Is the Flask server running?');
+    } finally {
+        document.getElementById('submitSpinner').classList.remove('visible');
+        document.getElementById('submitLabel').textContent = 'Submit & Get Results';
+        document.getElementById('submitBtn').disabled = false;
+    }
+}
+
+function maturityClass(m) {
+    const map = { 'Resilient': 'resilient', 'Developing': 'developing', 'Vulnerable': 'vulnerable', 'Critical Risk': 'critical' };
+    return map[m] || 'critical';
+}
+function maturityColor(m) {
+    const map = { 'Resilient': '#10B981', 'Developing': '#3B82F6', 'Vulnerable': '#F59E0B', 'Critical Risk': '#EF4444' };
+    return map[m] || '#EF4444';
+}
+
+function renderResults(data) {
+    const sec = document.getElementById('results');
+    sec.classList.add('visible');
+    const mc = maturityColor(data.overall_maturity);
+
+    let domainMinis = data.domains.map(d => `
+    <div class="result-domain-mini">
+      <div class="rdm-title">${d.icon} ${d.title}</div>
+      <div class="rdm-score" style="color:${maturityColor(d.maturity)}">${d.percent}%</div>
+      <div class="rdm-bar"><div class="rdm-bar-fill" style="width:${d.percent}%;background:${maturityColor(d.maturity)}"></div></div>
+    </div>
+  `).join('');
+
+    let domainBreakdowns = data.domains.map(d => {
+        const gaps = d.gaps.map(g => `
+      <div class="gap-item gap-high">
+        <div class="gap-tag">Gap — High Priority</div>
+        <div class="gap-q">${g.question}</div>
+        <div class="gap-rec">${g.recommendation}</div>
+      </div>`).join('');
+        const partials = d.partial.map(g => `
+      <div class="gap-item gap-medium">
+        <div class="gap-tag">Partial — Improvement Needed</div>
+        <div class="gap-q">${g.question}</div>
+        <div class="gap-rec">${g.recommendation}</div>
+      </div>`).join('');
+        return `
+      <div class="domain-result">
+        <div class="dr-header" onclick="this.parentElement.classList.toggle('open')">
+          <span class="dr-icon">${d.icon}</span>
+          <span class="dr-title">${d.title}</span>
+          <span class="dr-pct" style="color:${maturityColor(d.maturity)}">${d.percent}%</span>
+          <span class="dr-mat mat-${maturityClass(d.maturity)}">${d.maturity}</span>
+        </div>
+        <div class="dr-body">${gaps}${partials}${(!d.gaps.length && !d.partial.length) ? '<div class="all-good">✓ All controls in place.</div>' : ''}</div>
+      </div>`;
+    }).join('');
+
+    let recs = data.top_recommendations.map((r, i) => `
+    <div class="rec-item">
+      <div class="rec-num ${r.priority}">${i + 1}</div>
+      <div>
+        <div class="rec-domain ${r.priority}">${r.domain}</div>
+        <div class="rec-text">${r.recommendation}</div>
+      </div>
+    </div>`).join('');
+
+    document.getElementById('resultsContent').innerHTML = `
+    <div class="result-hero">
+      <div class="result-hero-top" style="background:linear-gradient(135deg,${mc}18,var(--bg2))">
+        <div>
+          <div class="result-score-big" style="color:${mc}">${data.overall_percent}%</div>
+          <div class="result-maturity" style="color:${mc}">${data.overall_maturity}</div>
+          <div class="result-org">${data.org_name} · ${data.sector} · ${data.timestamp}</div>
+        </div>
+      </div>
+      <div class="result-hero-bottom">${domainMinis}</div>
+    </div>
+    <div class="sec-header"><span class="sec-num">Domain Breakdown</span></div>
+    ${domainBreakdowns}
+    <div class="sec-header"><span class="sec-num">Priority Recommendations</span></div>
+    <div class="rec-list">${recs}</div>
+  `;
+}
+
+async function updateHistory() {
+    try {
+        const res = await fetch('/api/results');
+        const data = await res.json();
+        const list = document.getElementById('historyList');
+        if (!data.sessions.length) return;
+        list.innerHTML = data.sessions.reverse().map(s => `
+      <div class="hist-item">
+        <div class="hist-score" style="color:${maturityColor(s.overall_maturity)}">${s.overall_percent}%</div>
+        <div class="hist-info">
+          <div class="hist-org">${s.org_name}</div>
+          <div class="hist-meta">${s.sector} · ${s.timestamp}</div>
+        </div>
+        <div class="hist-mat mat-${maturityClass(s.overall_maturity)}">${s.overall_maturity}</div>
+      </div>`).join('');
+    } catch (_) { }
+}

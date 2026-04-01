@@ -1,0 +1,9 @@
+blinker
+click
+colorama
+Flask
+flask-cors
+itsdangerous
+Jinja2
+MarkupSafe
+Werkzeug
